@@ -1,5 +1,5 @@
 trigger:
-- master
+- main
 - development
 
 variables:
@@ -60,7 +60,7 @@ stages:
 - stage: DeployProd
   displayName: Deploy Production
   dependsOn: DeployTest
-  condition: and(succeeded('DeployTest'), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded('DeployTest'), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   jobs:
   - deployment: Prod
     environment: Production
