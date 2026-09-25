@@ -5,7 +5,7 @@ trigger:
 variables:
   azureSubscription: 'Azure Vostok (60447d26-d388-4a2b-a8cd-45114f7099a8)'
   vmImageName: 'ubuntu-22.04'
-  workingDirectory: '$(System.DefaultWorkingDirectory)/memesfinder-querygenerator'
+  workingDirectory: '$(System.DefaultWorkingDirectory)'
 
 stages:
 - stage: Build
@@ -19,6 +19,7 @@ stages:
       displayName: Build
       inputs:
         command: publish
+        publishWebProjects: false
         projects: '$(workingDirectory)/*.csproj'
         arguments: '--output $(System.DefaultWorkingDirectory)/publish_output --configuration Release'
     - task: ArchiveFiles@2
