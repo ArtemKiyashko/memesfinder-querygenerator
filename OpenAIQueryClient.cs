@@ -1,10 +1,7 @@
-using System.Net.Http.Headers;
 using System;
-using System.Text;
-using System.Text.Json;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenAI.Chat;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,48 +9,29 @@ namespace MemesFinderQueryGenerator;
 
 public sealed class OpenAIQueryClient
 {
-    private readonly HttpClient _httpClient;
-    private readonly OpenAIOptions _options;
+    private readonly ChatClient _chatClient;
     private readonly ILogger<OpenAIQueryClient> _logger;
 
-    public OpenAIQueryClient(HttpClient httpClient, IOptions<OpenAIOptions> options, ILogger<OpenAIQueryClient> logger)
+    public OpenAIQueryClient(IOptions<OpenAIOptions> options, ILogger<OpenAIQueryClient> logger)
     {
-        _httpClient = httpClient;
-        _options = options.Value;
+        var openAIOptions = options.Value;
+        if (string.IsNullOrWhiteSpace(openAIOptions.ApiKey))
+            throw new InvalidOperationException("OpenAIOptions:ApiKey is not configured.");
+
+        _chatClient = new ChatClient(openAIOptions.Model, openAIOptions.ApiKey);
         _logger = logger;
     }
 
     public async Task<string> GenerateQueryAsync(string message, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_options.ApiKey))
-            throw new InvalidOperationException("OpenAIOptions:ApiKey is not configured.");
-
-        var request = new
+        var messages = new List<ChatMessage>
         {
-            model = _options.Model,
-            temperature = 0.2,
-            max_tokens = 80,
-            messages = new[]
-            {
-                new { role = "system", content = QueryPrompt.System },
-                new { role = "user", content = QueryPrompt.User(message) }
-            }
+            new SystemChatMessage(QueryPrompt.System),
+            new UserChatMessage(QueryPrompt.User(message))
         };
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, _options.Endpoint);
-        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-        httpRequest.Content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
-
-        using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        using var json = JsonDocument.Parse(body);
-        var result = json.RootElement
-            .GetProperty("choices")[0]
-            .GetProperty("message")
-            .GetProperty("content")
-            .GetString();
+        var completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+        var result = completion.Value.Content[0].Text;
 
         var query = NormalizeQuery(result);
         if (query is null)

@@ -10,7 +10,7 @@ var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.Services.Configure<OpenAIOptions>(builder.Configuration.GetSection("OpenAIOptions"));
 builder.Services.Configure<ServiceBusOptions>(builder.Configuration.GetSection("ServiceBusOptions"));
-builder.Services.AddHttpClient<OpenAIQueryClient>();
+builder.Services.AddSingleton<OpenAIQueryClient>();
 builder.Services.AddSingleton(provider =>
 {
     var options = provider.GetRequiredService<IOptions<ServiceBusOptions>>().Value;
