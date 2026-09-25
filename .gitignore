@@ -1,0 +1,26 @@
+# Build output
+bin/
+obj/
+artifacts/
+[Dd]ebug/
+[Rr]elease/
+
+# Azure Functions local output
+.azurefunctions/
+local.settings.json
+
+# IDE files
+.vs/
+.vscode/*.log
+*.user
+*.suo
+*.userprefs
+
+# Test and coverage output
+TestResults/
+*.trx
+*.coverage
+
+# OS files
+.DS_Store
+Thumbs.db

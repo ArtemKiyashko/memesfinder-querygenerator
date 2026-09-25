@@ -1,0 +1,81 @@
+trigger:
+- master
+- development
+
+variables:
+  azureSubscription: 'Azure Vostok (60447d26-d388-4a2b-a8cd-45114f7099a8)'
+  vmImageName: 'ubuntu-22.04'
+  workingDirectory: '$(System.DefaultWorkingDirectory)/memesfinder-querygenerator'
+
+stages:
+- stage: Build
+  displayName: Build And Test
+  jobs:
+  - job: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Build
+      inputs:
+        command: publish
+        projects: '$(workingDirectory)/*.csproj'
+        arguments: '--output $(System.DefaultWorkingDirectory)/publish_output --configuration Release'
+    - task: ArchiveFiles@2
+      displayName: Archive files
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/publish_output'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        replaceExistingArchive: true
+    - publish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      artifact: drop
+
+- stage: DeployTest
+  displayName: Deploy Test
+  dependsOn: Build
+  condition: succeeded('Build')
+  jobs:
+  - deployment: Test
+    environment: Test
+    variables:
+    - group: Test
+    pool:
+      vmImage: $(vmImageName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureFunctionApp@1
+            displayName: Deploy query generator
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: functionApp
+              appName: '$(functionappname_querygenerator)'
+              package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
+              deploymentMethod: auto
+
+- stage: DeployProd
+  displayName: Deploy Production
+  dependsOn: DeployTest
+  condition: and(succeeded('DeployTest'), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  jobs:
+  - deployment: Prod
+    environment: Production
+    variables:
+    - group: Production
+    pool:
+      vmImage: $(vmImageName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureFunctionApp@1
+            displayName: Deploy query generator
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: functionApp
+              appName: '$(functionappname_querygenerator)'
+              package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
+              deploymentMethod: auto
