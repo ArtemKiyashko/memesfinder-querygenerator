@@ -21,16 +21,10 @@ stages:
         command: publish
         publishWebProjects: false
         projects: '$(workingDirectory)/*.csproj'
-        arguments: '--output $(System.DefaultWorkingDirectory)/publish_output --configuration Release'
-    - task: ArchiveFiles@2
-      displayName: Archive files
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/publish_output'
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        replaceExistingArchive: true
-    - publish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        arguments: '--output $(Build.ArtifactStagingDirectory)/$(Build.BuildId) --configuration Release'
+        zipAfterPublish: true
+        modifyOutputPath: false
+    - publish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)/$(Build.BuildId).zip'
       artifact: drop
 
 - stage: DeployTest
