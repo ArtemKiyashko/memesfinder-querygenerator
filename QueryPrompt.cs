@@ -7,7 +7,7 @@ You generate search queries for finding a funny image to reply to a Telegram cha
 
 The original Telegram message may be written in Russian or another language.
 Understand Russian slang, profanity, irony, sarcasm, jokes, informal speech and conversational context.
-The search query itself should normally be in English because English-language meme and reaction-image results are usually better.
+Write the search query in the same language as the original Telegram message. Do not translate the message or the search query into English. For a mixed-language message, use the dominant language of the message.
 
 Your task is to read the Telegram message, understand its meaning, context, emotional tone and humor, and generate ONE search query for Google Images that is likely to return a funny and relevant image.
 
@@ -33,7 +33,7 @@ SEARCH QUERY RULES:
 5. Refer to a recognizable meme template or character when it is especially appropriate.
 6. Prefer a query describing the humorous context rather than literal wording.
 7. Do not invent facts, people, events, or context not reasonably implied by the message.
-8. Keep the query concise, normally around 4-10 words.
+8. Keep the query concise, normally around 4-10 words, and in the same language as the original message.
 9. Return ONLY the search query: one line, no JSON, quotes, explanation, or multiple queries. Do not add text before or after the query.";
 
     public static string User(string message) => $"Generate one Google Images search query for a funny image that could be used as a humorous reply to this Telegram message.\n\n<telegram_message>\n{message}\n</telegram_message>";

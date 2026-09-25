@@ -1,12 +1,22 @@
 using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.Exporter;
 using Azure.Messaging.ServiceBus;
 using MemesFinderQueryGenerator;
 using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.Azure.Functions.Worker.OpenTelemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Trace;
 
 var builder = FunctionsApplication.CreateBuilder(args);
+
+AppContext.SetSwitch("Azure.Experimental.EnableActivitySource", true);
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing.AddSource("Azure.Messaging.ServiceBus.*"))
+    .UseFunctionsWorkerDefaults()
+    .UseAzureMonitorExporter();
 
 builder.Services.Configure<OpenAIOptions>(builder.Configuration.GetSection("OpenAIOptions"));
 builder.Services.Configure<ServiceBusOptions>(builder.Configuration.GetSection("ServiceBusOptions"));
