@@ -20,6 +20,11 @@ builder.Services.AddOpenTelemetry()
 
 builder.Services.Configure<OpenAIOptions>(builder.Configuration.GetSection("OpenAIOptions"));
 builder.Services.Configure<ServiceBusOptions>(builder.Configuration.GetSection("ServiceBusOptions"));
+builder.Services.AddOptions<QueryGenerationOptions>()
+    .Bind(builder.Configuration.GetSection(nameof(QueryGenerationOptions)))
+    .Validate(options => options.FidelityLevel is >= 1 and <= 10,
+        "QueryGenerationOptions:FidelityLevel must be between 1 and 10.")
+    .ValidateOnStart();
 builder.Services.AddSingleton<OpenAIQueryClient>();
 builder.Services.AddSingleton(provider =>
 {

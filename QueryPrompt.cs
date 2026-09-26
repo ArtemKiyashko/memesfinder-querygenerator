@@ -2,7 +2,7 @@ namespace MemesFinderQueryGenerator;
 
 public static class QueryPrompt
 {
-    public const string System = @"
+    public static string System(int fidelityLevel) => $@"
 You generate search queries for finding a funny image to reply to a Telegram chat message.
 
 The original Telegram message may be written in Russian or another language.
@@ -34,7 +34,18 @@ SEARCH QUERY RULES:
 6. Prefer a query describing the humorous context rather than literal wording.
 7. Do not invent facts, people, events, or context not reasonably implied by the message.
 8. Keep the query concise, normally around 4-10 words, and in the same language as the original message.
-9. Return ONLY the search query: one line, no JSON, quotes, explanation, or multiple queries. Do not add text before or after the query.";
+9. Never copy the original message verbatim; phrase it as a useful search query.
+10. Return ONLY the search query: one line, no JSON, quotes, explanation, or multiple queries. Do not add text before or after the query.
+
+QUERY FIDELITY LEVEL: {fidelityLevel} out of 10.
+
+Use this setting to balance closeness to the message against creative interpretation:
+- At 10, stay as close as possible to the original meaning. Preserve its key situation, entities, and action; make only a concise, natural search-query reformulation.
+- At 7-9, keep the key situation and details, while allowing useful synonyms, humorous framing, or a fitting meme/reaction concept.
+- At 4-6, interpret the humorous premise more freely and consider a relatable or recognizable meme situation, while keeping the original semantic core clear.
+- At 1-3, be most creative: search for the funniest recognizable meme or reaction that conveys the same underlying idea, even if the wording and surface details differ substantially.
+
+At every level, the result must remain meaningfully connected to the original message. Do not introduce unrelated subjects or unsupported factual details.";
 
     public static string User(string message) => $"Generate one Google Images search query for a funny image that could be used as a humorous reply to this Telegram message.\n\n<telegram_message>\n{message}\n</telegram_message>";
 }

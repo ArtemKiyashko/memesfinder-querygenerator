@@ -11,14 +11,19 @@ public sealed class OpenAIQueryClient
 {
     private readonly ChatClient _chatClient;
     private readonly ILogger<OpenAIQueryClient> _logger;
+    private readonly int _fidelityLevel;
 
-    public OpenAIQueryClient(IOptions<OpenAIOptions> options, ILogger<OpenAIQueryClient> logger)
+    public OpenAIQueryClient(
+        IOptions<OpenAIOptions> options,
+        IOptions<QueryGenerationOptions> queryGenerationOptions,
+        ILogger<OpenAIQueryClient> logger)
     {
         var openAIOptions = options.Value;
         if (string.IsNullOrWhiteSpace(openAIOptions.ApiKey))
             throw new InvalidOperationException("OpenAIOptions:ApiKey is not configured.");
 
         _chatClient = new ChatClient(openAIOptions.Model, openAIOptions.ApiKey);
+        _fidelityLevel = queryGenerationOptions.Value.FidelityLevel;
         _logger = logger;
     }
 
@@ -26,7 +31,7 @@ public sealed class OpenAIQueryClient
     {
         var messages = new List<ChatMessage>
         {
-            new SystemChatMessage(QueryPrompt.System),
+            new SystemChatMessage(QueryPrompt.System(_fidelityLevel)),
             new UserChatMessage(QueryPrompt.User(message))
         };
 
@@ -52,7 +57,10 @@ public sealed class OpenAIQueryClient
         if (query.StartsWith("{") || query.Contains("```", StringComparison.Ordinal))
             return null;
 
-        _logger.LogInformation("Generated meme search query: {Query}", query);
+        _logger.LogInformation(
+            "Generated meme search query at fidelity level {FidelityLevel}: {Query}",
+            _fidelityLevel,
+            query);
         return query;
     }
 }
