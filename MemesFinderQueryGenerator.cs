@@ -2,6 +2,7 @@ using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
@@ -12,6 +13,12 @@ namespace MemesFinderQueryGenerator;
 
 public sealed class MemesFinderQueryGenerator
 {
+    private static readonly JsonSerializerOptions TelegramJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
+    };
+
     private readonly OpenAIQueryClient _openAIQueryClient;
     private readonly ServiceBusClient _serviceBusClient;
     private readonly ServiceBusOptions _options;
@@ -51,7 +58,7 @@ public sealed class MemesFinderQueryGenerator
         var model = new TgMessageModel { Message = message, Keyword = query };
 
         await using var sender = _serviceBusClient.CreateSender(_options.KeywordMessagesTopic);
-        var serviceBusMessage = new ServiceBusMessage(JsonSerializer.Serialize(model))
+        var serviceBusMessage = new ServiceBusMessage(JsonSerializer.Serialize(model, TelegramJsonOptions))
         {
             MessageId = $"{message.Chat.Id}:{message.MessageId}"
         };
